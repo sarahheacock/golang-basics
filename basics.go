@@ -51,7 +51,7 @@ func infer() {
   fmt.Printf("v is of type %T\n", v)
 }
 
-// constants are devlared with `const`
+// constants are declared with `const`
 // constants cannot be declared with :=
 func con() bool {
   const Truth = true
