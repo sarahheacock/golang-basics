@@ -2,6 +2,12 @@ package main
 
 import (
 	"fmt"
+	"time"
+	"os"
+	"strings"
+	"io"
+	"image"
+	// "golang.org/x/tour/pic"
 )
 
 func max(x int) int {
@@ -70,6 +76,143 @@ func changeType() interface{} {
 	return num;
 }
 
+// can perform type assertion to interface's concrete value
+func assert() (int, bool){
+	var i interface{} = 0
+	s, ok := i.(int)
+	return s, ok // returns the value and if it matches type
+}
+
+// A type switch is a construct that permits several type assertions in series
+// cases in a type switch specify types not values
+func typeSwitch() {
+	var i interface{} = 0
+
+	switch v := i.(type) {
+	case int:
+		fmt.Printf("%v is an int\n", v)
+	default:
+		fmt.Printf("%v is NOT an int", v)
+	}
+}
+
+// Stringer is an interface defined by fmt package
+// Stinger is a type that can describe itself as a string
+// type Stringer interface {
+// 	String() string
+// }
+type Person struct {
+	Name string
+	Age  int
+}
+
+// type Person implements interface String
+func (p Person) String() string {
+	return fmt.Sprintf("%v (%v years)", p.Name, p.Age)
+}
+
+func stringer() {
+	var p Person = Person{"Arthur Dent", 42}
+	fmt.Println(p)
+}
+
+type MyError struct {
+	When time.Time
+	What string
+}
+// error type is built-in interface similar to fmt.Stringer
+// type error interface {
+// 	Error() string
+// }
+func (e MyError) Error() string {
+	return fmt.Sprintf("at %v, %s", e.When, e.What)
+}
+// handle errors by testing whether error equals nil
+
+func run() error {
+	return MyError{
+		time.Now(),
+		"ruh roh",
+	}
+}
+
+// io package specifies io.Reader interface which represents read end of stream of data
+// io.Reader interface has Read method
+// func (T) Read(b []byte) (n int, err error) -->
+// returns number of bytes populated with an error value
+// return io.EOF error when the stream ends
+func read() {
+	r := strings.NewReader("Hello, Reader!")
+
+	b := make([]byte, 8) // makes a zeroed array and a slice that references it
+
+	// prints...
+	// "Hello, R"
+	// "eader!"
+	// "" <-- with EOF error
+	for {
+		n, err := r.Read(b)
+		fmt.Printf("n = %v err = %v b = %v\n", n, err, b)
+		fmt.Printf("b[:n] = %q\n", b[:n])
+		if err == io.EOF {
+			break
+		}
+	}
+}
+
+// io.Reader that wraps another io.Reader
+// modifying the stream in some way
+type rot13Reader struct {
+	r io.Reader
+}
+
+func (r *rot13Reader) Read(b []byte) (int, error) {
+	l,e := r.r.Read(b)
+	for i,c := range(b) {
+      if c <= 'Z' && c >='A'  {
+        b[i] = (c - 'A' + 13)%26 + 'A'
+      } else if c >= 'a' && c <= 'z' {
+        b[i] = (c - 'a' + 13)%26 + 'a'
+      }
+    }
+	return l, e
+}
+
+// Package image defines the Image interface
+// type Image interface {
+//   ColorModel() color.Model
+//   Bounds() Rectangle
+//   At(x, y int) color.Color
+// }
+func createImage() {
+	m := image.NewRGBA(image.Rect(0, 0, 100, 100))
+	fmt.Println(m.Bounds())
+	fmt.Println(m.At(0, 0).RGBA())
+}
+
+// create image
+// type Image struct{
+// 	Width, Height int
+// 	colr uint8
+// }
+//
+// func (r *Image) Bounds() image.Rectangle {
+// 	return image.Rect(0, 0, r.Width, r.Height)
+// }
+//
+// func (r *Image) ColorModel() color.Model {
+// 	return color.RGBAModel
+// }
+//
+// func (r *Image) At(x, y int) color.Color {
+// 	return color.RGBA{r.colr+uint8(x), r.colr+uint8(y), 255, 255}
+// }
+
+// func createMyImage() {
+// 	m := Image{100, 100, 128}
+// 	pic.ShowImage(&m)
+// }
+
 func main() {
   v := Vertex{1, 2}
   // same as (&v).add()
@@ -81,6 +224,8 @@ func main() {
   fmt.Println(v)
 
   var a Abser
+	// a.Abs() --> there is no type inside the interface
+	// tuple to indicate which concrete method to call
   fmt.Printf("%T\n", a) //<nil>
 	// a.Abs() will cause runtime error here
 	// does not know which concrete method to run
@@ -101,4 +246,21 @@ func main() {
   fmt.Printf("%T\n", a)
 
 	fmt.Println(changeType())
+	fmt.Println(assert())
+	typeSwitch()
+
+	stringer()
+
+	if err := run(); err != nil {
+		fmt.Println(err)
+	}
+
+	read()
+
+	s := strings.NewReader("Lbh penpxrq gur pbqr!\n")
+	r := rot13Reader{s}
+	io.Copy(os.Stdout, &r)
+
+	createImage()
+	// createMyImage()
 }
