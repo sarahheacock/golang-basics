@@ -64,6 +64,8 @@ func fib(c, quit chan int){
 }
 
 func main() {
+  // hello prints first and then they alternate
+  // go is put on a queue??
   go say("world")
   say("hello")
 
